@@ -45,6 +45,6 @@ app.*.map.json
 /android/app/release
 
 # Secrets
-.env
-android/key.properties
-android/upload-keystore.jks
+# .env
+# android/key.properties
+# android/upload-keystore.jks
