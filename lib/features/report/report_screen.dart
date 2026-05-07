@@ -25,8 +25,13 @@ class _ReportScreenState extends State<ReportScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          success ? 'تم تجهيز التقرير بنجاح' : 'حدث خطأ أثناء إعداد التقرير، يرجى التحقق من اتصالك بالإنترنت',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          success
+              ? 'تم تجهيز التقرير بنجاح'
+              : 'حدث خطأ أثناء إعداد التقرير، يرجى التحقق من اتصالك بالإنترنت',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: success ? Colors.green : Colors.redAccent,
         behavior: SnackBarBehavior.floating,
@@ -46,15 +51,39 @@ class _ReportScreenState extends State<ReportScreen> {
         title: const Text('تقرير تحليل طِبابة AI'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          _isDownloading
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.download),
+                  onPressed: _handleDownload,
+                ),
+        ],
       ),
       body: AppBackground(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              _buildOverallScore(overallScore, data['overall_status'] ?? 'تحليل معلق'),
+              _buildOverallScore(
+                overallScore,
+                data['overall_status'] ?? 'تحليل معلق',
+              ),
               const SizedBox(height: 30),
-              _buildMissedRevenueCard(data['missed_revenue'] ?? 0, data['currency'] ?? 'ريال'),
+              _buildMissedRevenueCard(
+                data['missed_revenue'] ?? 0,
+                data['currency'] ?? 'ريال',
+              ),
               const SizedBox(height: 20),
               _buildExecutiveSummary(data['executive_summary']),
               const SizedBox(height: 30),
@@ -342,12 +371,26 @@ class _ReportScreenState extends State<ReportScreen> {
               borderColor: AppColors.primary,
               entryRadius: 3,
               dataEntries: [
-                RadarEntry(value: (double.tryParse(scores['marketing'].toString()) ?? 0)),
-                RadarEntry(value: (double.tryParse(scores['operations'].toString()) ?? 0)),
-                RadarEntry(value: (double.tryParse(scores['financial'].toString()) ?? 0)),
-                RadarEntry(value: (double.tryParse(scores['team'].toString()) ?? 0)),
-                RadarEntry(value: (double.tryParse(scores['growth'].toString()) ?? 0)),
-                RadarEntry(value: (double.tryParse(scores['experience'].toString()) ?? 0)),
+                RadarEntry(
+                  value: (double.tryParse(scores['marketing'].toString()) ?? 0),
+                ),
+                RadarEntry(
+                  value:
+                      (double.tryParse(scores['operations'].toString()) ?? 0),
+                ),
+                RadarEntry(
+                  value: (double.tryParse(scores['financial'].toString()) ?? 0),
+                ),
+                RadarEntry(
+                  value: (double.tryParse(scores['team'].toString()) ?? 0),
+                ),
+                RadarEntry(
+                  value: (double.tryParse(scores['growth'].toString()) ?? 0),
+                ),
+                RadarEntry(
+                  value:
+                      (double.tryParse(scores['experience'].toString()) ?? 0),
+                ),
               ],
             ),
           ],
@@ -435,10 +478,7 @@ class _ReportScreenState extends State<ReportScreen> {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Text(
@@ -504,12 +544,18 @@ class _ReportScreenState extends State<ReportScreen> {
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         '${labels[groupIndex]}\n',
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                         children: <TextSpan>[
                           TextSpan(
                             text: '${rod.toY.round()}%',
                             style: TextStyle(
-                              color: rodIndex == 0 ? Colors.white54 : AppColors.primary,
+                              color: rodIndex == 0
+                                  ? Colors.white54
+                                  : AppColors.primary,
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
                             ),
@@ -529,7 +575,11 @@ class _ReportScreenState extends State<ReportScreen> {
                           padding: const EdgeInsets.only(top: 10.0),
                           child: Text(
                             labels[value.toInt()],
-                            style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         );
                       },
@@ -545,13 +595,20 @@ class _ReportScreenState extends State<ReportScreen> {
                         if (value == 0) return const SizedBox.shrink();
                         return Text(
                           '${value.toInt()}',
-                          style: const TextStyle(color: Colors.white38, fontSize: 11),
+                          style: const TextStyle(
+                            color: Colors.white38,
+                            fontSize: 11,
+                          ),
                         );
                       },
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 gridData: FlGridData(
                   show: true,
@@ -612,7 +669,7 @@ class _ReportScreenState extends State<ReportScreen> {
       (overallScore + 15).toDouble(),
       (overallScore + 22).toDouble(),
       (overallScore + 30).toDouble(),
-      100.0
+      100.0,
     ];
     final rawProjBefore = [
       overallScore.toDouble(),
@@ -620,16 +677,23 @@ class _ReportScreenState extends State<ReportScreen> {
       (overallScore - 6).toDouble(),
       (overallScore - 10).toDouble(),
       (overallScore - 15).toDouble(),
-      (overallScore - 20).toDouble()
+      (overallScore - 20).toDouble(),
     ];
-    
-    double maxProj = rawProjAfter.reduce((curr, next) => curr > next ? curr : next);
-    if (rawProjBefore.reduce((curr, next) => curr > next ? curr : next) > maxProj) {
+
+    double maxProj = rawProjAfter.reduce(
+      (curr, next) => curr > next ? curr : next,
+    );
+    if (rawProjBefore.reduce((curr, next) => curr > next ? curr : next) >
+        maxProj) {
       maxProj = rawProjBefore.reduce((curr, next) => curr > next ? curr : next);
     }
-    
-    final after = maxProj > 100 ? rawProjAfter.map((v) => (v / maxProj) * 100).toList() : rawProjAfter.map((v) => v.clamp(0.0, 100.0)).toList();
-    final before = maxProj > 100 ? rawProjBefore.map((v) => (v / maxProj) * 100).toList() : rawProjBefore.map((v) => v.clamp(0.0, 100.0)).toList();
+
+    final after = maxProj > 100
+        ? rawProjAfter.map((v) => (v / maxProj) * 100).toList()
+        : rawProjAfter.map((v) => v.clamp(0.0, 100.0)).toList();
+    final before = maxProj > 100
+        ? rawProjBefore.map((v) => (v / maxProj) * 100).toList()
+        : rawProjBefore.map((v) => v.clamp(0.0, 100.0)).toList();
 
     final labels = ['الآن', 'ش1', 'ش2', 'ش3', 'ش6', 'ش12'];
 
@@ -670,11 +734,16 @@ class _ReportScreenState extends State<ReportScreen> {
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((LineBarSpot touchedSpot) {
                         final textStyle = TextStyle(
-                          color: touchedSpot.barIndex == 0 ? Colors.redAccent : AppColors.primary,
+                          color: touchedSpot.barIndex == 0
+                              ? Colors.redAccent
+                              : AppColors.primary,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         );
-                        return LineTooltipItem('${touchedSpot.y.round()}%', textStyle);
+                        return LineTooltipItem(
+                          '${touchedSpot.y.round()}%',
+                          textStyle,
+                        );
                       }).toList();
                     },
                   ),
@@ -706,7 +775,14 @@ class _ReportScreenState extends State<ReportScreen> {
                         if (idx >= 0 && idx < labels.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 10.0),
-                            child: Text(labels[idx], style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                            child: Text(
+                              labels[idx],
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           );
                         }
                         return const Text('');
@@ -720,12 +796,22 @@ class _ReportScreenState extends State<ReportScreen> {
                       reservedSize: 35,
                       getTitlesWidget: (value, meta) {
                         if (value == 0) return const SizedBox.shrink();
-                        return Text(value.toInt().toString(), style: const TextStyle(color: Colors.white38, fontSize: 11));
+                        return Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(
+                            color: Colors.white38,
+                            fontSize: 11,
+                          ),
+                        );
                       },
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
@@ -734,7 +820,10 @@ class _ReportScreenState extends State<ReportScreen> {
                 maxY: 100,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: List.generate(6, (i) => FlSpot(i.toDouble(), before[i])),
+                    spots: List.generate(
+                      6,
+                      (i) => FlSpot(i.toDouble(), before[i]),
+                    ),
                     isCurved: true,
                     curveSmoothness: 0.35,
                     color: Colors.redAccent.withValues(alpha: 0.8),
@@ -742,18 +831,22 @@ class _ReportScreenState extends State<ReportScreen> {
                     isStrokeCapRound: true,
                     dotData: FlDotData(
                       show: true,
-                      getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                        radius: 4,
-                        color: const Color(0xFF0B1221),
-                        strokeColor: Colors.redAccent,
-                        strokeWidth: 2,
-                      ),
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                            radius: 4,
+                            color: const Color(0xFF0B1221),
+                            strokeColor: Colors.redAccent,
+                            strokeWidth: 2,
+                          ),
                     ),
                     belowBarData: BarAreaData(show: false),
                     dashArray: [5, 5],
                   ),
                   LineChartBarData(
-                    spots: List.generate(6, (i) => FlSpot(i.toDouble(), after[i])),
+                    spots: List.generate(
+                      6,
+                      (i) => FlSpot(i.toDouble(), after[i]),
+                    ),
                     isCurved: true,
                     curveSmoothness: 0.35,
                     gradient: LinearGradient(
@@ -771,12 +864,13 @@ class _ReportScreenState extends State<ReportScreen> {
                     ),
                     dotData: FlDotData(
                       show: true,
-                      getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                        radius: 5,
-                        color: AppColors.primary,
-                        strokeColor: Colors.white,
-                        strokeWidth: 2,
-                      ),
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                            radius: 5,
+                            color: AppColors.primary,
+                            strokeColor: Colors.white,
+                            strokeWidth: 2,
+                          ),
                     ),
                     belowBarData: BarAreaData(
                       show: true,

@@ -91,6 +91,15 @@ class AnalysisService {
     return history;
   }
 
+  Future<int> getHistoryCount() async {
+    try {
+      final history = await getAnalysisHistory();
+      return history.length;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   Future<Map<String, dynamic>> runAiAnalysis(String clinicName, Map<String, dynamic> formData) async {
     if (_geminiApiKey.isEmpty || _geminiApiKey.length < 10) {
       return runHeuristicAnalysis(clinicName, formData);

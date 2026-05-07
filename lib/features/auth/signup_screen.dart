@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tebaba_mobile/core/theme/app_colors.dart';
 import 'package:tebaba_mobile/shared/widgets/app_background.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -21,6 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _agreedToTerms = false;
 
   Future<void> _handleSignup() async {
     final name = _nameController.text.trim();
@@ -28,6 +30,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (name.isEmpty || email.isEmpty) {
       _showError('برجاء ملء جميع الحقول');
+      return;
+    }
+
+    if (!_agreedToTerms) {
+      _showError('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية');
       return;
     }
 
@@ -138,7 +145,50 @@ class _SignupScreenState extends State<SignupScreen> {
                   icon: FontAwesomeIcons.lock,
                   isPassword: true,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (value) =>
+                            setState(() => _agreedToTerms = value ?? false),
+                        activeColor: AppColors.primary,
+                        side: BorderSide(
+                          color: Colors.white.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Wrap(
+                        children: [
+                          const Text(
+                            'أوافق على ',
+                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                          GestureDetector(
+                            onTap: () => launchUrl(
+                              Uri.parse('https://zbooma.com/privacy-policy/'),
+                            ),
+                            child: const Text(
+                              'سياسة الخصوصية',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 13,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
                 SizedBox(
                   width: double.infinity,
                   height: 60,
