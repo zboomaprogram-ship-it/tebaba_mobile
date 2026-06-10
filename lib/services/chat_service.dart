@@ -1,20 +1,28 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatService {
-  final String _geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+  Future<String> _getApiKey() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customApiKey = prefs.getString('custom_gemini_api_key') ?? '';
+      if (customApiKey.isNotEmpty) return customApiKey;
+    } catch (_) {}
+    return dotenv.env['GEMINI_API_KEY'] ?? '';
+  }
 
   Future<String> getAiResponse(String message, List<Map<String, String>> history) async {
-    if (_geminiApiKey.isEmpty || _geminiApiKey.length < 10) {
+    final apiKey = await _getApiKey();
+    if (apiKey.isEmpty || apiKey.length < 10) {
       return 'خطأ: مفتاح API غير مُهيأ. يرجى التحقق من إعدادات التطبيق.';
     }
 
     final models = [
-      'gemini-2.5-flash',
-      'gemini-flash-latest',
-      'gemini-2.0-flash-lite',
       'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-flash-latest',
     ];
 
     final systemInstruction = {
@@ -50,7 +58,7 @@ Format your response clearly with line breaks when listing points.
         final response = await http
             .post(
           Uri.parse(
-              'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$_geminiApiKey'),
+              'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'system_instruction': systemInstruction,
@@ -63,7 +71,7 @@ Format your response clearly with line breaks when listing points.
           final data = jsonDecode(response.body);
           return data['candidates'][0]['content']['parts'][0]['text'] as String;
         } else {
-          print('Gemini API Error for $model: \${response.statusCode} - \${response.body}');
+          print('Gemini API Error for $model: ${response.statusCode} - ${response.body}');
         }
       } catch (e) {
         print('Exception for $model: $e');
@@ -73,3 +81,4 @@ Format your response clearly with line breaks when listing points.
     return 'عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي. تحقق من الاتصال بالإنترنت وحاول مرة أخرى.';
   }
 }
+

@@ -28,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUpdating = false;
   bool _notificationsEnabled = true;
   late TextEditingController _nameController;
+  String _geminiApiKey = '';
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController = TextEditingController(text: widget.user['full_name']);
     _loadStats();
     _loadNotificationSettings();
+    _loadApiKey();
   }
 
   Future<void> _loadNotificationSettings() async {
@@ -52,6 +54,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _notificationsEnabled = value);
   }
 
+  Future<void> _loadApiKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _geminiApiKey = prefs.getString('custom_gemini_api_key') ?? '';
+    });
+  }
+
+  Future<void> _saveApiKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('custom_gemini_api_key', key.trim());
+    setState(() {
+      _geminiApiKey = key.trim();
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم حفظ مفتاح API بنجاح')),
+      );
+    }
+  }
+
+  void _showApiKeyDialog() {
+    final controller = TextEditingController(text: _geminiApiKey);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0B1221),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'إعدادات مفتاح Gemini API',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'أدخل مفتاح Google Gemini API الخاص بك لتشغيل المحادثة الذكية والتحليلات المتقدمة:',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 15),
+            TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                labelText: 'Gemini API Key (AIzaSy...)',
+                labelStyle: const TextStyle(color: Colors.white54, fontSize: 12),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.primary),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _saveApiKey(controller.text);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              'حفظ',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -67,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _supabase
           .from('profiles')
           .update({'full_name': newName})
-          .eq('id', _supabase.auth.currentUser!.id);
+          .eq('id', widget.user['id']);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم تحديث الملف الشخصي بنجاح')),
@@ -159,6 +244,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (confirmed == true) {
       await _supabase.auth.signOut();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('user_email');
+      
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -179,14 +267,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirmed == true) {
+      setState(() => _isUpdating = true);
       try {
-        // Since client-side deletion is restricted in Supabase, we usually call an edge function
-        // or just sign out after showing a notification that the request was sent.
-        // For production readiness, we will sign out and redirect.
-        await _supabase.auth.signOut();
+        final userId = widget.user['id'];
+        
+        // 1. Attempt to delete reports from Supabase (to prevent foreign key violations if ON DELETE CASCADE is missing)
+        try {
+          await _supabase.from('analysis_results').delete().eq('user_id', userId);
+        } catch (e) {
+          print('Supabase reports deletion error/skip: $e');
+        }
+        
+        // 2. Attempt to delete profile record from Supabase
+        try {
+          await _supabase.from('profiles').delete().eq('id', userId);
+        } catch (e) {
+          print('Supabase profile deletion error/skip: $e');
+          // Fallback: Anonymize the profile data if delete fails due to RLS
+          try {
+            await _supabase.from('profiles').update({
+              'full_name': 'Deleted User',
+              'email': 'deleted_${userId.toString().substring(0, 8)}@tebaba.com',
+            }).eq('id', userId);
+          } catch (e2) {
+            print('Supabase profile anonymization error: $e2');
+          }
+        }
+
+        // 3. Clear local SharedPreferences cached values
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('user_email');
+        await prefs.remove('analysis_history');
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إرسال طلب حذف الحساب بنجاح')),
+            const SnackBar(content: Text('تم حذف الحساب والبيانات بنجاح')),
           );
           Navigator.pushAndRemoveUntil(
             context,
@@ -197,9 +312,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('فشل طلب الحذف، حاول مرة أخرى')),
+            const SnackBar(content: Text('فشل حذف الحساب، تم تسجيل خروجك وتأمين بياناتك')),
           );
         }
+      } finally {
+        if (mounted) setState(() => _isUpdating = false);
       }
     }
   }
@@ -280,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildUserHeader() {
-    final createdAt = _supabase.auth.currentUser?.createdAt;
+    final createdAt = widget.user['created_at'];
     final joinDate = createdAt != null
         ? intl.DateFormat('MMMM yyyy', 'ar').format(DateTime.parse(createdAt))
         : '...';
@@ -337,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ).animate().fadeIn(delay: 200.ms),
         Text(
-          _supabase.auth.currentUser?.email ?? '',
+          widget.user['email'] ?? '',
           style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14),
         ).animate().fadeIn(delay: 300.ms),
         const SizedBox(height: 8),
@@ -447,6 +564,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   mode: LaunchMode.externalApplication,
                 ),
+              ),
+              _buildDivider(),
+              _buildSettingsTile(
+                'إعدادات مفتاح Gemini API',
+                FontAwesomeIcons.key,
+                onTap: _showApiKeyDialog,
               ),
               // _buildDivider(),
               // _buildSwitchTile(

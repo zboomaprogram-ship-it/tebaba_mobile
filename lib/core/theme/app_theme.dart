@@ -14,6 +14,12 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: AppColors.primary,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Cairo', // maintain consistent Font Family
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

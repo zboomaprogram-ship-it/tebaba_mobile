@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:tebaba_mobile/core/theme/app_colors.dart';
 
 class LandingSections {
   static Widget buildWhy() {
@@ -289,7 +290,7 @@ class LandingSections {
             children: [
               Text(icon, style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF4D9FFF))),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
             ],
           ),
           const SizedBox(height: 5),

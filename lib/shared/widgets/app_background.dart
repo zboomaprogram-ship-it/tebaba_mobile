@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// - Dark base (#030A10)
 /// - Subtle grid overlay
 /// - Radial teal glow (top-left area)
-/// - Floating particles
+/// - Lush field of 35 glowing, floating 3D rotating DNA double helices drifting upwards
 class AppBackground extends StatefulWidget {
   final Widget child;
   const AppBackground({super.key, required this.child});
@@ -16,18 +16,19 @@ class AppBackground extends StatefulWidget {
 
 class _AppBackgroundState extends State<AppBackground>
     with TickerProviderStateMixin {
-  late final List<_Particle> _particles;
-  late final AnimationController _controller;
+  late List<_DnaParticle> _dnaParticles;
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
     final rand = math.Random();
-    _particles = List.generate(22, (i) => _Particle(rand));
+    _dnaParticles = List.generate(35, (i) => _DnaParticle(rand));
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20),
-    )..repeat();
+      duration: const Duration(seconds: 18),
+    );
+    _controller.repeat();
   }
 
   @override
@@ -43,15 +44,20 @@ class _AppBackgroundState extends State<AppBackground>
         // Base dark background
         Container(color: const Color(0xFF030A10)),
 
-        // Animated particles
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return CustomPaint(
-              painter: _ParticlePainter(_particles, _controller.value),
-              child: const SizedBox.expand(),
-            );
-          },
+        // Animated 3D DNA background
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return CustomPaint(
+                painter: _DnaPainter(
+                  t: _controller.value,
+                  dnaParticles: _dnaParticles,
+                ),
+                child: const SizedBox.expand(),
+              );
+            },
+          ),
         ),
 
         // Radial glow — top left
@@ -74,63 +80,123 @@ class _AppBackgroundState extends State<AppBackground>
         ),
 
         // Subtle grid overlay
-        CustomPaint(
-          painter: _GridPainter(),
-          child: const SizedBox.expand(),
+        Positioned.fill(
+          child: CustomPaint(
+            painter: _GridPainter(),
+            child: const SizedBox.expand(),
+          ),
         ),
 
         // Content
-        widget.child,
+        Positioned.fill(
+          child: widget.child,
+        ),
       ],
     );
   }
 }
 
-class _Particle {
-  final double x; // 0–1 relative to screen width
-  final double startY; // starting position (1 = bottom, comes from bottom)
-  final double size;
-  final double speed; // duration multiplier
-  final double delay; // animation delay 0–1
+class _DnaParticle {
+  final double x; // 0-1 relative to width
+  final double startY; // 0-1 relative to height
+  final double size; // 8 to 20 pixels wide
+  final double speed;
+  final double delay;
+  final double rotationPhase;
+  final double wobbleSpeed;
+  final double wobbleAmplitude;
   final Color color;
 
-  _Particle(math.Random rand)
+  _DnaParticle(math.Random rand)
       : x = rand.nextDouble(),
         startY = rand.nextDouble(),
-        size = rand.nextDouble() * 4 + 2,
-        speed = rand.nextDouble() * 0.5 + 0.3,
+        size = rand.nextDouble() * 12 + 8, // 8 to 20 pixels wide
+        speed = rand.nextDouble() * 0.12 + 0.08,
         delay = rand.nextDouble(),
-        color = [
-          const Color(0xFF00C2A8).withValues(alpha: 0.4),
-          const Color(0xFF0B4F6C).withValues(alpha: 0.6),
-          const Color(0xFFE8A020).withValues(alpha: 0.3),
-        ][rand.nextInt(3)];
+        rotationPhase = rand.nextDouble() * 2 * math.pi,
+        wobbleSpeed = rand.nextDouble() * 2 + 1.5,
+        wobbleAmplitude = rand.nextDouble() * 10 + 5,
+        color = const Color(0xFF00C2A8);
 }
 
-class _ParticlePainter extends CustomPainter {
-  final List<_Particle> particles;
-  final double t; // animation value 0–1
+class _DnaPainter extends CustomPainter {
+  final double t; // animation progress 0 to 1
+  final List<_DnaParticle> dnaParticles;
 
-  _ParticlePainter(this.particles, this.t);
+  _DnaPainter({required this.t, required this.dnaParticles});
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final p in particles) {
-      // Each particle drifts upward, loops with its own speed + delay
-      final progress = ((t * p.speed + p.delay) % 1.0);
-      final y = size.height * (1 - progress); // bottom to top
-      final x = size.width * p.x;
+    // Draw 35 glowing, floating 3D rotating DNA double helices drifting upwards
+    for (final particle in dnaParticles) {
+      _drawDnaParticle(canvas, size, particle);
+    }
+  }
 
-      canvas.drawCircle(
-        Offset(x, y),
-        p.size,
-        Paint()..color = p.color,
+  void _drawDnaParticle(Canvas canvas, Size size, _DnaParticle particle) {
+    final progress = ((t * particle.speed + particle.delay) % 1.0);
+    final y = size.height * (1 - progress);
+    
+    // Wobble dynamically side-to-side for fluid organic motion
+    final wobble = math.sin(t * particle.wobbleSpeed * math.pi + particle.delay * 10) * particle.wobbleAmplitude;
+    final x = (size.width * particle.x) + wobble;
+
+    // Fade out smoothly near top and bottom edges
+    double alphaFactor = 1.0;
+    if (progress < 0.15) {
+      alphaFactor = progress / 0.15;
+    } else if (progress > 0.85) {
+      alphaFactor = (1.0 - progress) / 0.15;
+    }
+
+    final baseOpacity = 0.03 + (particle.size / 20.0) * 0.07; 
+    final opacity = baseOpacity * alphaFactor;
+
+    // Only paint if visible
+    if (opacity <= 0) return;
+
+    // Draw the micro DNA double-helix
+    final helixWidth = particle.size * 0.9;
+    final spacing = particle.size * 0.6;
+    final rotation = (t * 4 * math.pi) + particle.rotationPhase;
+
+    for (int j = -1; j <= 1; j++) {
+      final rY = y + (j * spacing);
+      final rTheta = (j * 0.8) + rotation;
+
+      final xA = x + (helixWidth / 2) * math.sin(rTheta);
+      final zA = math.cos(rTheta);
+
+      final xB = x - (helixWidth / 2) * math.sin(rTheta);
+
+      final dnaOpacity = opacity * 1.5;
+      final nodeSize = 0.8 + (zA + 1.0) * 0.7;
+
+      // Connecting rung
+      canvas.drawLine(
+        Offset(xA, rY),
+        Offset(xB, rY),
+        Paint()
+          ..color = particle.color.withValues(alpha: dnaOpacity * 0.4)
+          ..strokeWidth = 0.8,
       );
+
+      // Back node
+      if (zA < 0) {
+        canvas.drawCircle(Offset(xA, rY), nodeSize, Paint()..color = particle.color.withValues(alpha: dnaOpacity));
+      }
+      // Front node
+      if (zA >= 0) {
+        canvas.drawCircle(Offset(xA, rY), nodeSize, Paint()..color = particle.color.withValues(alpha: dnaOpacity));
+      }
+      
+      // Node B
+      canvas.drawCircle(Offset(xB, rY), nodeSize, Paint()..color = particle.color.withValues(alpha: dnaOpacity));
     }
   }
 
   @override
-  bool shouldRepaint(_ParticlePainter old) => true;
+  bool shouldRepaint(_DnaPainter old) => true;
 }
 
 class _GridPainter extends CustomPainter {

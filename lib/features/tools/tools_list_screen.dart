@@ -9,6 +9,7 @@ import 'package:tebaba_mobile/features/tools/hr_support_screen.dart';
 import 'package:tebaba_mobile/features/tools/inventory_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tebaba_mobile/core/theme/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ToolsListScreen extends StatelessWidget {
   const ToolsListScreen({super.key});
@@ -16,14 +17,14 @@ class ToolsListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tools = [
-      {'id': 'roi', 'title': 'العائد الاستثماري', 'icon': '🩺', 'cat': 'Finance', 'desc': 'قياس العائد للأصول الطبية'},
-      {'id': 'cac', 'title': 'تكلفة جذب المريض', 'icon': '🎯', 'cat': 'Marketing', 'desc': 'احسب تكلفة كل مريض بدقة'},
-      {'id': 'ops', 'title': 'كفاءة التشغيل', 'icon': '⚡', 'cat': 'Operations', 'desc': 'تقييم السعة الاستيعابية'},
-      {'id': 'pricing', 'title': 'تحديد الأسعار', 'icon': '💰', 'cat': 'Strategy', 'desc': 'محرك ذكي للأسعار المثلى'},
-      {'id': 'profit', 'title': 'ربحية الخدمات', 'icon': '📊', 'cat': 'Analytics', 'desc': 'تحليل ربحية كل خدمة'},
-      {'id': 'expansion', 'title': 'دراسة التوسع', 'icon': '🗺️', 'cat': 'Expansion', 'desc': 'جدوى فتح فروع جديدة'},
-      {'id': 'hr', 'title': 'دعم التوظيف', 'icon': '👥', 'cat': 'HR', 'desc': 'قرار التوظيف الذكي'},
-      {'id': 'inventory', 'title': 'إدارة المخزون', 'icon': '📦', 'cat': 'Inventory', 'desc': 'نظام المخزون الطبي'},
+      {'id': 'roi', 'title': 'العائد الاستثماري', 'icon': FontAwesomeIcons.stethoscope, 'cat': 'Finance', 'desc': 'قياس العائد للأصول الطبية'},
+      {'id': 'cac', 'title': 'تكلفة جذب المريض', 'icon': FontAwesomeIcons.bullseye, 'cat': 'Marketing', 'desc': 'احسب تكلفة كل مريض بدقة'},
+      {'id': 'ops', 'title': 'كفاءة التشغيل', 'icon': FontAwesomeIcons.bolt, 'cat': 'Operations', 'desc': 'تقييم السعة الاستيعابية'},
+      {'id': 'pricing', 'title': 'تحديد الأسعار', 'icon': FontAwesomeIcons.coins, 'cat': 'Strategy', 'desc': 'محرك ذكي للأسعار المثلى'},
+      {'id': 'profit', 'title': 'ربحية الخدمات', 'icon': FontAwesomeIcons.chartSimple, 'cat': 'Analytics', 'desc': 'تحليل ربحية كل خدمة'},
+      {'id': 'expansion', 'title': 'دراسة التوسع', 'icon': FontAwesomeIcons.map, 'cat': 'Expansion', 'desc': 'جدوى فتح فروع جديدة'},
+      {'id': 'hr', 'title': 'دعم التوظيف', 'icon': FontAwesomeIcons.users, 'cat': 'HR', 'desc': 'قرار التوظيف الذكي'},
+      {'id': 'inventory', 'title': 'إدارة المخزون', 'icon': FontAwesomeIcons.box, 'cat': 'Inventory', 'desc': 'نظام المخزون الطبي'},
     ];
 
     return Scaffold(
@@ -77,21 +78,21 @@ class ToolsListScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      tool['cat']!,
+                      tool['cat'] as String,
                       style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 15),
-                  Text(tool['icon']!, style: const TextStyle(fontSize: 32)),
+                  Icon(tool['icon'] as IconData, size: 32, color: AppColors.primary),
                   const SizedBox(height: 10),
                   Text(
-                    tool['title']!,
+                    tool['title'] as String,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    tool['desc']!,
+                    tool['desc'] as String,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 10, color: Colors.white38),
                   ),

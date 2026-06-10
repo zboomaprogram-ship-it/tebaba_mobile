@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tebaba_mobile/features/home/home_screen.dart';
 import 'package:tebaba_mobile/features/tools/tools_list_screen.dart';
 import 'package:tebaba_mobile/features/auth/profile_screen.dart';
-import 'package:tebaba_mobile/features/home/chat_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:tebaba_mobile/core/theme/app_colors.dart';
 import 'package:tebaba_mobile/shared/widgets/app_background.dart';
@@ -26,7 +25,6 @@ class _MainShellState extends State<MainShell> {
     super.initState();
     _screens = [
       HomeScreen(user: widget.user),
-      const ChatScreen(),
       const ToolsListScreen(),
       ProfileScreen(user: widget.user),
     ];
@@ -67,11 +65,6 @@ class _MainShellState extends State<MainShell> {
               icon: Icon(FontAwesomeIcons.house, size: 20),
               activeIcon: Icon(FontAwesomeIcons.houseChimney, size: 22),
               label: 'الرئيسية',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.commentDots, size: 20),
-              activeIcon: Icon(FontAwesomeIcons.solidCommentDots, size: 22),
-              label: 'محادثة',
             ),
             BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.toolbox, size: 20),

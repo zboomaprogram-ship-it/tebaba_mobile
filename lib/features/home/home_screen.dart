@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:tebaba_mobile/features/health_check/diagnostic_form_screen.dart';
-import 'package:tebaba_mobile/features/home/chat_screen.dart';
 import 'package:tebaba_mobile/shared/widgets/landing_sections.dart';
 import 'package:tebaba_mobile/features/health_check/history_screen.dart';
 import 'package:tebaba_mobile/features/auth/profile_screen.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:tebaba_mobile/core/theme/app_colors.dart';
-import 'package:tebaba_mobile/features/health_check/history_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -19,79 +17,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _clinicNameController = TextEditingController();
-  Timer? _popupTimer;
 
   @override
   void initState() {
     super.initState();
-    _popupTimer = Timer(const Duration(seconds: 12), _showEngagementPopup);
   }
 
   @override
   void dispose() {
-    _popupTimer?.cancel();
     _clinicNameController.dispose();
     super.dispose();
-  }
-
-  void _showEngagementPopup() {
-    if (!mounted) return;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(30),
-        decoration: const BoxDecoration(
-          color: Color(0xFF0B1221),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🚀', style: TextStyle(fontSize: 40)),
-            const SizedBox(height: 20),
-            const Text(
-              'هل تريد نمو بزنسك الطبي؟',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'تحدث مع مستشارنا الخبير الآن واحصل على استشارة مخصصة لعيادتك',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ChatScreen()),
-                ),
-                icon: const Icon(Icons.chat_bubble, size: 18),
-                label: const Text(
-                  'ابدأ الدردشة الآن',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1DD9A0),
-                  foregroundColor: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'ربما لاحقاً',
-                style: TextStyle(color: Colors.white24),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _startDiagnostic() {
@@ -174,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Image.asset(
                 'assets/images/logo tebaba.png',
-                height: 80,
+                height: 130,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) =>
                     const Text('🏥', style: TextStyle(fontSize: 32)),
@@ -182,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.history, color: Colors.white54),
+                    icon: const Icon(FontAwesomeIcons.clockRotateLeft, color: Colors.white54, size: 20),
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -200,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: CircleAvatar(
                       backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                      child: Icon(Icons.person, color: AppColors.primary),
+                      child: Icon(FontAwesomeIcons.solidUser, color: AppColors.primary, size: 16),
                     ),
                   ),
                 ],

@@ -3,12 +3,20 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:tebaba_mobile/core/utils/score_calculator.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tebaba_mobile/services/auth_service.dart';
 
 class AnalysisService {
   final _supabase = Supabase.instance.client;
-  final String _geminiApiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+
+  Future<String> _getApiKey() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final customApiKey = prefs.getString('custom_gemini_api_key') ?? '';
+      if (customApiKey.isNotEmpty) return customApiKey;
+    } catch (_) {}
+    return dotenv.env['GEMINI_API_KEY'] ?? '';
+  }
 
   Future<void> saveAnalysis({
     required String clinicName,
@@ -34,9 +42,11 @@ class AnalysisService {
 
     // 2. Save to Supabase
     try {
-      await _supabase.from('analysis_reports').insert([
+      final authService = AuthService();
+      final user = await authService.getCurrentUser();
+      await _supabase.from('analysis_results').insert([
         {
-          if (_supabase.auth.currentUser != null) 'user_id': _supabase.auth.currentUser!.id,
+          if (user != null) 'user_id': user['id'],
           'report_data': combinedData,
         }
       ]);
@@ -50,12 +60,28 @@ class AnalysisService {
 
     // 1. Try fetching from Supabase
     try {
-      final response = await _supabase
-          .from('analysis_reports')
-          .select()
-          .order('id', ascending: false);
-      
-      history = List<Map<String, dynamic>>.from(response);
+      final authService = AuthService();
+      final user = await authService.getCurrentUser();
+      if (user != null) {
+        final response = await _supabase
+            .from('analysis_results')
+            .select()
+            .eq('user_id', user['id'])
+            .order('id', ascending: false);
+        
+        history = List<Map<String, dynamic>>.from(response).map((row) {
+          final reportData = row['report_data'] as Map<String, dynamic>? ?? {};
+          return {
+            'id': row['id'],
+            'user_id': row['user_id'],
+            'report_data': reportData,
+            'created_at': row['created_at'],
+            'clinic_name': reportData['clinic_name'] ?? 'عيادة بدون اسم',
+            'specialty': reportData['form_data']?['specialty'] ?? '',
+            'type': reportData['form_data']?['type'] ?? '',
+          };
+        }).toList();
+      }
     } catch (e) {
       print('Error fetching history from Supabase: $e');
     }
@@ -101,17 +127,17 @@ class AnalysisService {
   }
 
   Future<Map<String, dynamic>> runAiAnalysis(String clinicName, Map<String, dynamic> formData) async {
-    if (_geminiApiKey.isEmpty || _geminiApiKey.length < 10) {
+    final apiKey = await _getApiKey();
+    if (apiKey.isEmpty || apiKey.length < 10) {
       return runHeuristicAnalysis(clinicName, formData);
     }
 
     final prompt = _buildPrompt(clinicName, formData);
     
     final models = [
-      'gemini-2.5-flash',
-      'gemini-flash-latest',
-      'gemini-2.0-flash-lite',
       'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-flash-latest',
     ];
 
     final systemInstruction = {
@@ -129,7 +155,7 @@ Return ONLY a JSON object in professional ARABIC.
     for (final model in models) {
       try {
         final response = await http.post(
-          Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$_geminiApiKey'),
+          Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'system_instruction': systemInstruction,
@@ -149,7 +175,7 @@ Return ONLY a JSON object in professional ARABIC.
           text = text.replaceAll('```json', '').replaceAll('```', '').trim();
           return jsonDecode(text);
         } else {
-          print('Gemini API Error for $model: \${response.statusCode} - \${response.body}');
+          print('Gemini API Error for $model: ${response.statusCode} - ${response.body}');
         }
       } catch (e) {
         print('Exception for $model: $e');
